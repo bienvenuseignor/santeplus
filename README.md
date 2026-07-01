@@ -1,22 +1,14 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Santé+ Bénin
 
-# Run and deploy your AI Studio app
+Application fullstack de gestion de santé, rendez-vous, wallet et paiements pour le projet Santé+.
 
-This contains everything you need to run your app locally.
+## Démarrage local
 
-View your app in AI Studio: https://ai.studio/apps/7121d5fe-15f1-4952-bdb6-cf76a9c7af75
+Prérequis : Node.js
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
+1. Installer les dépendances :
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Lancer l’application :
    `npm run dev`
-# santeplus
-# santeplus
+3. Ouvrir l’interface sur :
+   `http://localhost:3000`

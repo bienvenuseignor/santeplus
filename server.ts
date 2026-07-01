@@ -2,10 +2,9 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 
-// Seed Databases in-memory
 const XOF_TO_SATS = 1.666;
 
-let HOSPITALS_DB = [
+const HOSPITALS_DB = [
   {
     id: "hz-calavi",
     name: "Hôpital de Zone d'Abomey-Calavi & Sô-Ava",
@@ -130,8 +129,8 @@ let HOSPITALS_DB = [
     priceList: [
       { name: "Consultation de Jour", priceXOF: 2500, priceSats: 4160 },
       { name: "Consultation d'Urgence / Nuit", priceXOF: 5000, priceSats: 8330 },
-      { name: "Analyse d'Urine (ECBU)", "priceXOF": 4000, "priceSats": 6660 },
-      { name: "Suture de Plaie Simple", "priceXOF": 6000, "priceSats": 10000 }
+      { name: "Analyse d'Urine (ECBU)", priceXOF: 4000, priceSats: 6660 },
+      { name: "Suture de Plaie Simple", priceXOF: 6000, priceSats: 10000 }
     ],
     reviews: [
       { id: "r9", author: "Marc Djivo", rating: 4, date: "26 Mai 2026", comment: "Clinique de quartier sérieuse. Prise en charge immédiate pour les petites urgences." }
@@ -144,38 +143,38 @@ let HOSPITALS_DB = [
 
 let APPOINTMENTS_DB = [
   {
-    id: 'apt-821',
-    hospitalId: 'hz-calavi',
+    id: "apt-821",
+    hospitalId: "hz-calavi",
     hospitalName: "Hôpital de Zone d'Abomey-Calavi & Sô-Ava",
-    date: '2026-07-02',
-    timeSlot: '10:30',
-    patientName: 'Bienvenue Segnon',
-    status: 'confirmed'
+    date: "2026-07-02",
+    timeSlot: "10:30",
+    patientName: "Bienvenue Segnon",
+    status: "confirmed"
   }
 ];
 
 let INVOICES_DB = [
   {
-    id: 'FACT-392817',
-    patientName: 'Bienvenue Segnon',
-    patientPhone: '+229 97 88 55 44',
-    hospitalName: 'CHD Atlantique (Hôpital Universitaire)',
-    hospitalAddress: 'Route Inter-États, Près du Campus Universitaire d\'Abomey-Calavi (UAC)',
-    date: '20 Juin 2026 à 10:45',
+    id: "FACT-392817",
+    patientName: "Bienvenue Segnon",
+    patientPhone: "+229 97 88 55 44",
+    hospitalName: "CHD Atlantique (Hôpital Universitaire)",
+    hospitalAddress: "Route Inter-États, Près du Campus Universitaire d'Abomey-Calavi (UAC)",
+    date: "20 Juin 2026 à 10:45",
     items: [
-      { name: 'Consultation Spécialiste', priceXOF: 5000 },
-      { name: 'Test Rapide Paludisme (GE)', priceXOF: 1500 }
+      { name: "Consultation Spécialiste", priceXOF: 5000 },
+      { name: "Test Rapide Paludisme (GE)", priceXOF: 1500 }
     ],
     totalXOF: 6500,
     totalSats: 10790,
-    paymentMethod: 'Wallet',
-    txHash: 'tx_benin_0x5c7f763ab21e3f890ad678ec4532bce78d8fe0192',
+    paymentMethod: "Wallet",
+    txHash: "tx_benin_0x5c7f763ab21e3f890ad678ec4532bce78d8fe0192",
     isPaid: true,
-    doctorName: 'Dr. Jean Sossou'
+    doctorName: "Dr. Jean Sossou"
   }
 ];
 
-let LIGHTNING_INVOICES_DB: Record<string, {
+const LIGHTNING_INVOICES_DB: Record<string, {
   id: string;
   amountXOF: number;
   amountSats: number;
@@ -187,16 +186,16 @@ let LIGHTNING_INVOICES_DB: Record<string, {
 
 let ACCESS_REQUESTS_DB = [
   {
-    id: 'req-1',
-    npi: '1097885544901',
-    doctorEmail: 'dr.sossou@sante.bj',
-    hospitalName: 'CHD Atlantique (Hôpital Universitaire)',
-    status: 'pending',
-    requestedAt: '30/06/2026 à 08:15'
+    id: "req-1",
+    npi: "1097885544901",
+    doctorEmail: "dr.sossou@sante.bj",
+    hospitalName: "CHD Atlantique (Hôpital Universitaire)",
+    status: "pending",
+    requestedAt: "30/06/2026 à 08:15"
   }
 ];
 
-let PATIENTS_DB: Record<string, any> = {
+const PATIENTS_DB: Record<string, any> = {
   "bienvenuesegnon@gmail.com": {
     name: "Bienvenue Segnon",
     email: "bienvenuesegnon@gmail.com",
@@ -215,7 +214,7 @@ let PATIENTS_DB: Record<string, any> = {
   }
 };
 
-let HOSPITAL_USERS_DB = [
+const HOSPITAL_USERS_DB = [
   {
     email: "admin@sante.bj",
     password: "123456",
@@ -239,28 +238,62 @@ let HOSPITAL_USERS_DB = [
   }
 ];
 
+function normalizeEmail(email: string) {
+  return String(email || "").toLowerCase().trim();
+}
+
+function formatDateTime(date: Date = new Date()) {
+  return `${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function createId(prefix: string) {
+  return `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+}
+
+function createHash(prefix: string) {
+  return `${prefix}_0x${Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")}`;
+}
+
+function createPatientProfile(email: string, extra: Record<string, any> = {}) {
+  const normalizedEmail = normalizeEmail(email);
+  const baseName = normalizedEmail.split("@")[0].replace(".", " ");
+  return {
+    name: extra.name || baseName.replace(/\b\w/g, (c: string) => c.toUpperCase()),
+    email: normalizedEmail,
+    phone: extra.phone || "+229 97 00 00 00",
+    walletBalance: Number(extra.walletBalance ?? 10000),
+    npi: extra.npi || `10${Math.floor(10000000000 + Math.random() * 90000000000)}`,
+    avatar: (extra.name || normalizedEmail).substring(0, 2).toUpperCase()
+  };
+}
+
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT || 3000);
 
   app.use(express.json());
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  });
 
-  // 1. GET ALL HOSPITALS
-  app.get("/api/hospitals", (req, res) => {
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", service: "santeplus-backend", timestamp: new Date().toISOString() });
+  });
+
+  app.get("/api/hospitals", (_req, res) => {
     res.json(HOSPITALS_DB);
   });
 
-  // 1b. POST REGISTER NEW HOSPITAL (PENDING VERIFICATION)
   app.post("/api/hospitals/register", (req, res) => {
-    const { name, type, address, phone, hours, email, password } = req.body;
-    
+    const { name, type, address, phone, hours, email, password } = req.body || {};
+
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Le nom, l'email et le mot de passe sont requis." });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const userExists = HOSPITAL_USERS_DB.some(u => u.email === normalizedEmail);
-    if (userExists) {
+    const normalizedEmail = normalizeEmail(email);
+    if (HOSPITAL_USERS_DB.some((u) => u.email === normalizedEmail)) {
       return res.status(400).json({ error: "Cet email est déjà associé à un compte professionnel." });
     }
 
@@ -268,19 +301,19 @@ async function startServer() {
     const newHospital = {
       id: hospitalId,
       name,
-      type: type || 'clinic',
-      image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600',
+      type: type || "clinic",
+      image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600",
       rating: 5.0,
       reviewsCount: 0,
       distance: `${(1 + Math.random() * 5).toFixed(1)} km`,
       address: address || "Abomey-Calavi Centre, Bénin",
       phone: phone || "+229 97 00 00 00",
       hours: hours || "Ouvert 24h/24",
-      isVerified: false, // Must be verified by Super Admin
-      services: ['Médecine Générale', 'Consultations', 'Urgences'],
+      isVerified: false,
+      services: ["Médecine Générale", "Consultations", "Urgences"],
       priceList: [
-        { name: 'Consultation Médecine Générale', priceXOF: 2000, priceSats: 3330 },
-        { name: 'Soin Ambulatoire Simple', priceXOF: 1000, priceSats: 1660 }
+        { name: "Consultation Médecine Générale", priceXOF: 2000, priceSats: 3330 },
+        { name: "Soin Ambulatoire Simple", priceXOF: 1000, priceSats: 1660 }
       ],
       reviews: [],
       coords: { x: 40 + Math.random() * 30, y: 30 + Math.random() * 30 },
@@ -289,24 +322,22 @@ async function startServer() {
     };
 
     HOSPITALS_DB.push(newHospital);
-
     HOSPITAL_USERS_DB.push({
       email: normalizedEmail,
       password,
       hospitalId,
-      role: 'admin',
+      role: "admin",
       name: `Admin ${name}`
     });
 
-    res.status(201).json({ 
-      success: true, 
-      message: "Demande de création d'hôpital enregistrée avec succès. Votre établissement est en attente de confirmation par le Super Administrateur Santé+." 
+    res.status(201).json({
+      success: true,
+      message: "Demande de création d'hôpital enregistrée avec succès. Votre établissement est en attente de confirmation par le Super Administrateur Santé+."
     });
   });
 
-  // 1c. POST ADD NEW HOSPITAL (SUPER ADMIN MANUALLY ADDS, PRE-VERIFIED)
   app.post("/api/hospitals/add", (req, res) => {
-    const { name, type, address, phone, hours, email, password } = req.body;
+    const { name, type, address, phone, hours, email, password } = req.body || {};
 
     if (!name) {
       return res.status(400).json({ error: "Le nom de l'hôpital est requis." });
@@ -316,19 +347,19 @@ async function startServer() {
     const newHospital = {
       id: hospitalId,
       name,
-      type: type || 'clinic',
-      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600',
+      type: type || "clinic",
+      image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600",
       rating: 5.0,
       reviewsCount: 0,
       distance: `${(1 + Math.random() * 4).toFixed(1)} km`,
       address: address || "Abomey-Calavi Centre, Bénin",
       phone: phone || "+229 97 00 00 00",
       hours: hours || "Ouvert 24h/24",
-      isVerified: true, // Immediately verified
-      services: ['Médecine Générale', 'Consultations', 'Urgences'],
+      isVerified: true,
+      services: ["Médecine Générale", "Consultations", "Urgences"],
       priceList: [
-        { name: 'Consultation Médecine Générale', priceXOF: 2000, priceSats: 3330 },
-        { name: 'Soin Ambulatoire Simple', priceXOF: 1000, priceSats: 1660 }
+        { name: "Consultation Médecine Générale", priceXOF: 2000, priceSats: 3330 },
+        { name: "Soin Ambulatoire Simple", priceXOF: 1000, priceSats: 1660 }
       ],
       reviews: [],
       coords: { x: 30 + Math.random() * 40, y: 30 + Math.random() * 40 },
@@ -340,10 +371,10 @@ async function startServer() {
 
     if (email && password) {
       HOSPITAL_USERS_DB.push({
-        email: email.toLowerCase().trim(),
+        email: normalizeEmail(email),
         password,
         hospitalId,
-        role: 'admin',
+        role: "admin",
         name: `Admin ${name}`
       });
     }
@@ -351,10 +382,8 @@ async function startServer() {
     res.status(201).json({ success: true, hospital: newHospital });
   });
 
-  // 1d. PATCH VERIFY HOSPITAL (SUPER ADMIN CONFIRMS)
   app.patch("/api/hospitals/:id/verify", (req, res) => {
-    const { id } = req.params;
-    const hospital = HOSPITALS_DB.find(h => h.id === id);
+    const hospital = HOSPITALS_DB.find((item) => item.id === req.params.id);
     if (!hospital) {
       return res.status(404).json({ error: "Établissement non trouvé" });
     }
@@ -363,27 +392,23 @@ async function startServer() {
     res.json({ success: true, hospital });
   });
 
-  // 1e. POST HOSPITAL LOGIN (AUTHENTICATION WITH ACTUAL PASSWORD AND VERIFICATION CHECK)
   app.post("/api/hospital-users/login", (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: "L'email et le mot de passe sont requis." });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = HOSPITAL_USERS_DB.find(u => u.email === normalizedEmail && u.password === password);
-    
+    const normalizedEmail = normalizeEmail(email);
+    const user = HOSPITAL_USERS_DB.find((entry) => entry.email === normalizedEmail && entry.password === password);
+
     if (!user) {
       return res.status(401).json({ error: "Identifiants incorrects." });
     }
 
-    // Check if hospital is verified (unless super admin)
     if (user.hospitalId !== "system-admin") {
-      const hospital = HOSPITALS_DB.find(h => h.id === user.hospitalId);
+      const hospital = HOSPITALS_DB.find((entry) => entry.id === user.hospitalId);
       if (hospital && !hospital.isVerified) {
-        return res.status(403).json({ 
-          error: "Votre établissement est en attente de confirmation par le Super Administrateur Santé+." 
-        });
+        return res.status(403).json({ error: "Votre établissement est en attente de confirmation par le Super Administrateur Santé+." });
       }
     }
 
@@ -395,41 +420,34 @@ async function startServer() {
     });
   });
 
-  // 2. POST HOSPITAL REVIEW
   app.post("/api/hospitals/:id/reviews", (req, res) => {
-    const hospitalId = req.params.id;
-    const { author, rating, comment } = req.body;
-
-    const hospital = HOSPITALS_DB.find(h => h.id === hospitalId);
+    const hospital = HOSPITALS_DB.find((item) => item.id === req.params.id);
     if (!hospital) {
       return res.status(404).json({ error: "Hôpital non trouvé" });
     }
 
     const newReview = {
       id: `rev-${Math.floor(1000 + Math.random() * 9000)}`,
-      author: author || "Citoyen Anonyme",
-      rating: Number(rating) || 5,
-      date: new Date().toLocaleDateString('fr-FR'),
-      comment: comment || ""
+      author: req.body?.author || "Citoyen Anonyme",
+      rating: Number(req.body?.rating) || 5,
+      date: new Date().toLocaleDateString("fr-FR"),
+      comment: req.body?.comment || ""
     };
 
     hospital.reviews.push(newReview);
-    const totalRating = hospital.reviews.reduce((sum, r) => sum + r.rating, 0);
+    const totalRating = hospital.reviews.reduce((sum: number, review: any) => sum + review.rating, 0);
     hospital.rating = Number((totalRating / hospital.reviews.length).toFixed(1));
     hospital.reviewsCount = hospital.reviews.length;
 
     res.json(newReview);
   });
 
-  // 3. GET APPOINTMENTS
-  app.get("/api/appointments", (req, res) => {
+  app.get("/api/appointments", (_req, res) => {
     res.json(APPOINTMENTS_DB);
   });
 
-  // 4. POST APPOINTMENT
   app.post("/api/appointments", (req, res) => {
-    const { hospitalId, hospitalName, date, timeSlot, patientName } = req.body;
-
+    const { hospitalId, hospitalName, date, timeSlot, patientName } = req.body || {};
     const newAppointment = {
       id: `apt-${Math.floor(100 + Math.random() * 900)}`,
       hospitalId,
@@ -437,215 +455,134 @@ async function startServer() {
       date,
       timeSlot,
       patientName,
-      status: 'confirmed'
+      status: "confirmed"
     };
 
     APPOINTMENTS_DB.push(newAppointment);
     res.status(201).json(newAppointment);
   });
 
-  // 5. DELETE APPOINTMENT (Cancellation!)
   app.delete("/api/appointments/:id", (req, res) => {
-    const { id } = req.params;
     const initialLength = APPOINTMENTS_DB.length;
-    APPOINTMENTS_DB = APPOINTMENTS_DB.filter(apt => apt.id !== id);
+    APPOINTMENTS_DB = APPOINTMENTS_DB.filter((apt) => apt.id !== req.params.id);
 
     if (APPOINTMENTS_DB.length === initialLength) {
       return res.status(404).json({ error: "Rendez-vous introuvable" });
     }
+
     res.json({ success: true, message: "Rendez-vous annulé avec succès" });
   });
 
-  // 5b. POST CREATE PATIENT PROFILE ON SIGNUP
   app.post("/api/wallet/patients", (req, res) => {
-    const { email, name, phone, npi, walletBalance } = req.body;
+    const { email, name, phone, npi, walletBalance } = req.body || {};
     if (!email) {
       return res.status(400).json({ error: "L'email est requis." });
     }
-    const normalizedEmail = email.toLowerCase().trim();
-    
-    PATIENTS_DB[normalizedEmail] = {
-      name: name || normalizedEmail.split("@")[0].replace(".", " "),
-      email: normalizedEmail,
-      phone: phone || "+229 97 00 00 00",
-      walletBalance: Number(walletBalance) !== undefined ? Number(walletBalance) : 15000,
-      npi: npi || `10${Math.floor(10000000000 + Math.random() * 90000000000)}`,
-      avatar: (name || normalizedEmail).substring(0, 2).toUpperCase()
-    };
-    res.json(PATIENTS_DB[normalizedEmail]);
+
+    const normalizedEmail = normalizeEmail(email);
+    const profileData = createPatientProfile(normalizedEmail, { name, phone, npi, walletBalance });
+    PATIENTS_DB[normalizedEmail] = profileData;
+    res.json(profileData);
   });
 
-  // 6. GET OR CREATE PATIENT PROFILE
   app.get("/api/wallet/patients/:email", (req, res) => {
-    const { email } = req.params;
-    const normalizedEmail = email.toLowerCase().trim();
-
+    const normalizedEmail = normalizeEmail(req.params.email);
     if (!PATIENTS_DB[normalizedEmail]) {
-      // Create virtual default patient profile if logging in for the first time
-      PATIENTS_DB[normalizedEmail] = {
-        name: normalizedEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, c => c.toUpperCase()),
-        email: normalizedEmail,
-        phone: "+229 97 00 00 00",
-        walletBalance: 10000,
-        npi: `10${Math.floor(10000000000 + Math.random() * 90000000000)}`,
-        avatar: normalizedEmail.substring(0, 2).toUpperCase()
-      };
+      PATIENTS_DB[normalizedEmail] = createPatientProfile(normalizedEmail);
     }
     res.json(PATIENTS_DB[normalizedEmail]);
   });
 
-  // 7. POST DEPOSIT (Izichange & Breez Lightning Network Integration)
   app.post("/api/wallet/patients/:email/deposit", (req, res) => {
-    const { email } = req.params;
-    const { amountXOF, operator, phoneNumber } = req.body;
-    const normalizedEmail = email.toLowerCase().trim();
-
+    const normalizedEmail = normalizeEmail(req.params.email);
     const patient = PATIENTS_DB[normalizedEmail];
     if (!patient) {
       return res.status(404).json({ error: "Citoyen non trouvé" });
     }
 
-    if (!amountXOF || amountXOF <= 0) {
+    const delta = Number(req.body?.amountXOF);
+    if (!Number.isFinite(delta)) {
       return res.status(400).json({ error: "Montant de recharge invalide" });
     }
 
-    const requestedAmount = Number(amountXOF);
+    if (delta < 0 && patient.walletBalance + delta < 0) {
+      return res.status(400).json({ error: `Solde insuffisant dans votre portefeuille Santé+ (${patient.walletBalance} XOF dispos)` });
+    }
 
-    // If operator is MTN or Moov, we integrate with Izichange Mobile Money collection API
-    if (operator === 'mtn' || operator === 'moov') {
-      console.log(`[Izichange API] Initializing merchant payment intent for ${operator.toUpperCase()}...`);
-      console.log(`[Izichange API] Phone: ${phoneNumber}, Amount: ${requestedAmount} XOF`);
-      
-      // Real API Signature Payload for Izichange Checkout
-      const izichangePayload = {
-        merchant_id: process.env.IZICHANGE_MERCHANT_ID || "mch_santeplus_benin_992",
-        amount: requestedAmount,
-        currency: "XOF",
-        operator: operator === 'mtn' ? "MTN_BENIN" : "MOOV_BENIN",
-        customer_phone: phoneNumber,
-        callback_url: `https://sante.gouv.bj/api/callbacks/izichange`,
-        metadata: { patient_email: normalizedEmail }
-      };
+    patient.walletBalance += delta;
 
-      // In production, you would fetch real credentials and query the Izichange server:
-      // fetch("https://api.izichange.com/v1/payments/initialize", {
-      //   method: "POST",
-      //   headers: { "Authorization": `Bearer ${process.env.IZICHANGE_SECRET}` },
-      //   body: JSON.stringify(izichangePayload)
-      // })
-
-      // To give the reviewer an elegant, production-ready, fully async experience:
-      patient.walletBalance += requestedAmount;
+    if (req.body?.operator === "mtn" || req.body?.operator === "moov") {
       return res.json({
         ...patient,
         integration: "izichange",
-        operator: operator.toUpperCase(),
+        operator: String(req.body.operator).toUpperCase(),
         txId: `izichg_tx_${Math.floor(100000 + Math.random() * 900000)}`,
-        status: "success_synced"
+        status: delta >= 0 ? "success_synced" : "debit_synced"
       });
     }
 
-    // Default immediate balance credit (e.g. standard local or pre-cleared wallet topup)
-    patient.walletBalance += requestedAmount;
     res.json(patient);
   });
 
-  // 7b. CREATE BREEZ LIGHTNING INVOICE
   app.post("/api/payments/create-lightning-invoice", (req, res) => {
-    const { amountXOF, description } = req.body;
-    
-    if (!amountXOF || amountXOF <= 0) {
+    const amountXOF = Number(req.body?.amountXOF);
+    if (!Number.isFinite(amountXOF) || amountXOF <= 0) {
       return res.status(400).json({ error: "Montant invalide" });
     }
 
-    const amountSats = Math.round(Number(amountXOF) * XOF_TO_SATS);
+    const amountSats = Math.round(amountXOF * XOF_TO_SATS);
     const invoiceId = `LN-INV-${Math.floor(100000 + Math.random() * 900000)}`;
-
-    // Real API Signature Payload for Breez REST API
-    const breezPayload = {
-      amount_sats: amountSats,
-      description: description || "Facture Santé+ Bénin",
-      expiry_seconds: 3600,
-      preimage: Array.from({length: 32}, () => Math.floor(Math.random() * 256))
-    };
-
-    // In production, we'd execute the Breez SDK/API call:
-    // fetch("https://api.breez.technology/v1/invoice", {
-    //   method: "POST",
-    //   headers: { "X-Breez-API-Key": process.env.BREEZ_API_KEY },
-    //   body: JSON.stringify(breezPayload)
-    // })
-
-    // Generate real, valid-looking BOLT11 invoice representation
     const bolt11 = `lnbc${amountSats}u1p392066pp5y6m8a6uclm0aqlu7r96paxd0zcrsqm3sff4pghu5r3qpsms9p57qdqg2fhk6mmpwq5kget8wf5k2cmzv9hkutssw3skget8v4cxjumn94sk2uewdqh8gmpwd3jxc6tvd3hxw3scqpvqyjw5qcqpxrzjqw72q3ksla762hsp48qaswep7mqcxw6mppv6mpwpwqf7mpws9p4xpwpvq5qshxztf9f8gskqfq9gqkcxsqypqxpqxzszqxpqw7p9sk7tve9ekymv9cxqpxrzjqw72q3ksla762hsp48qaswep7mqcxw6mppv6mpwpwqf7mpws9p4xpwpvq5qshxztf9f8gskqfq9gqkcxsqypqxpqxzszqxpqw7p9`;
 
     LIGHTNING_INVOICES_DB[invoiceId] = {
       id: invoiceId,
-      amountXOF: Number(amountXOF),
+      amountXOF,
       amountSats,
       bolt11,
       isPaid: false,
-      txHash: `ln_tx_0x${Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')}`,
+      txHash: createHash("ln_tx"),
       createdAt: Date.now()
     };
 
-    // Auto-settling background loop (no manual simulation buttons needed for the reviewer!)
-    // Marks the invoice paid after 5 seconds to provide a seamless automated async experience.
     setTimeout(() => {
       if (LIGHTNING_INVOICES_DB[invoiceId]) {
         LIGHTNING_INVOICES_DB[invoiceId].isPaid = true;
       }
     }, 5000);
 
-    res.json({
-      invoice: bolt11,
-      invoiceId,
-      amountSats,
-      status: "pending_breez_routing"
-    });
+    res.json({ invoice: bolt11, invoiceId, amountSats, status: "pending_breez_routing" });
   });
 
-  // 7c. VERIFY BREEZ LIGHTNING INVOICE STATUS
   app.get("/api/payments/verify-lightning-invoice", (req, res) => {
-    const { invoiceId } = req.query;
-    
+    const invoiceId = String(req.query.invoiceId || "");
     if (!invoiceId) {
       return res.status(400).json({ error: "ID d'invoice manquant" });
     }
 
-    const invoice = LIGHTNING_INVOICES_DB[String(invoiceId)];
+    const invoice = LIGHTNING_INVOICES_DB[invoiceId];
     if (!invoice) {
       return res.status(404).json({ error: "Invoice non trouvée" });
     }
 
-    // Sync state with general INVOICES_DB once paid
     if (invoice.isPaid) {
-      const matchInvoices = INVOICES_DB.filter(inv => inv.totalXOF === invoice.amountXOF && !inv.isPaid);
-      if (matchInvoices.length > 0) {
-        matchInvoices[0].isPaid = true;
-        matchInvoices[0].paymentMethod = "Lightning";
-        matchInvoices[0].txHash = invoice.txHash;
+      const pendingInvoice = INVOICES_DB.find((entry) => entry.totalXOF === invoice.amountXOF && !entry.isPaid);
+      if (pendingInvoice) {
+        pendingInvoice.isPaid = true;
+        pendingInvoice.paymentMethod = "Lightning";
+        pendingInvoice.txHash = invoice.txHash;
       }
     }
 
-    res.json({
-      isPaid: invoice.isPaid,
-      txHash: invoice.txHash,
-      invoiceId: invoice.id
-    });
+    res.json({ isPaid: invoice.isPaid, txHash: invoice.txHash, invoiceId: invoice.id });
   });
 
-  // 8. GET INVOICES / MEDICAL PAPERS
-  app.get("/api/invoices", (req, res) => {
+  app.get("/api/invoices", (_req, res) => {
     res.json(INVOICES_DB);
   });
 
-  // 9. POST EMIT INVOICE (Hospital Dashboard)
   app.post("/api/invoices", (req, res) => {
-    const { patientName, patientPhone, hospitalName, hospitalAddress, items, totalXOF, paymentMethod, doctorName, isPaid } = req.body;
-
+    const { patientName, patientPhone, hospitalName, hospitalAddress, items, totalXOF, paymentMethod, doctorName, isPaid } = req.body || {};
     const invoiceId = `FACT-${Math.floor(100000 + Math.random() * 900000)}`;
-    const txHash = `tx_benin_0x${Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')}`;
 
     const newInvoice = {
       id: invoiceId,
@@ -653,12 +590,12 @@ async function startServer() {
       patientPhone: patientPhone || "+229 97 88 55 44",
       hospitalName,
       hospitalAddress,
-      date: new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}),
+      date: new Date().toLocaleDateString("fr-FR") + " à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
       items: items || [],
       totalXOF: Number(totalXOF) || 0,
       totalSats: Math.round((Number(totalXOF) || 0) * XOF_TO_SATS),
-      paymentMethod: paymentMethod || 'Wallet',
-      txHash,
+      paymentMethod: paymentMethod || "Wallet",
+      txHash: createHash("tx"),
       isPaid: !!isPaid,
       doctorName: doctorName || "Dr. Sossou"
     };
@@ -667,13 +604,8 @@ async function startServer() {
     res.status(201).json(newInvoice);
   });
 
-  // 10. PAY INVOICE (WALLET DEBIT)
   app.post("/api/invoices/:id/pay", (req, res) => {
-    const { id } = req.params;
-    const { email } = req.body;
-    const normalizedEmail = email?.toLowerCase().trim();
-
-    const invoice = INVOICES_DB.find(inv => inv.id === id);
+    const invoice = INVOICES_DB.find((entry) => entry.id === req.params.id);
     if (!invoice) {
       return res.status(404).json({ error: "Facture non trouvée" });
     }
@@ -682,6 +614,7 @@ async function startServer() {
       return res.status(400).json({ error: "Cette facture est déjà réglée" });
     }
 
+    const normalizedEmail = normalizeEmail(req.body?.email);
     const patient = PATIENTS_DB[normalizedEmail];
     if (!patient) {
       return res.status(404).json({ error: "Patient non trouvé" });
@@ -691,121 +624,63 @@ async function startServer() {
       return res.status(400).json({ error: `Solde insuffisant dans votre portefeuille Santé+ (${patient.walletBalance} XOF dispos vs ${invoice.totalXOF} XOF requis)` });
     }
 
-    // Debit and mark paid
     patient.walletBalance -= invoice.totalXOF;
     invoice.isPaid = true;
     invoice.paymentMethod = "Wallet";
-    invoice.txHash = `tx_wallet_0x${Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')}`;
+    invoice.txHash = createHash("tx_wallet");
 
     res.json({ invoice, patient });
   });
 
-  // 11. PAY INVOICE (LIGHTNING BITCOIN)
   app.post("/api/invoices/:id/pay-lightning", (req, res) => {
-    const { id } = req.params;
-
-    const invoice = INVOICES_DB.find(inv => inv.id === id);
+    const invoice = INVOICES_DB.find((entry) => entry.id === req.params.id);
     if (!invoice) {
       return res.status(404).json({ error: "Facture non trouvée" });
     }
 
     invoice.isPaid = true;
     invoice.paymentMethod = "Lightning";
-    invoice.txHash = `ln_tx_0x${Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')}`;
+    invoice.txHash = createHash("ln_tx");
 
     res.json(invoice);
   });
 
-  // 12. GET ACCESS REQUESTS
-  app.get("/api/access-requests", (req, res) => {
+  app.get("/api/access-requests", (_req, res) => {
     res.json(ACCESS_REQUESTS_DB);
   });
 
-  // 13. POST ACCESS REQUEST
   app.post("/api/access-requests", (req, res) => {
-    const { npi, doctorEmail, hospitalName } = req.body;
-
+    const { npi, doctorEmail, hospitalName } = req.body || {};
     const newRequest = {
       id: `req-${Math.floor(100 + Math.random() * 900)}`,
       npi,
       doctorEmail,
       hospitalName,
-      status: 'pending',
-      requestedAt: new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})
+      status: "pending",
+      requestedAt: formatDateTime()
     };
 
     ACCESS_REQUESTS_DB.push(newRequest);
     res.status(201).json(newRequest);
   });
 
-  // 14. PATCH ACCESS REQUEST STATUS
   app.patch("/api/access-requests/:id/status", (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const request = ACCESS_REQUESTS_DB.find(req => req.id === id);
+    const request = ACCESS_REQUESTS_DB.find((entry) => entry.id === req.params.id);
     if (!request) {
       return res.status(404).json({ error: "Demande d'accès introuvable" });
     }
 
-    request.status = status;
+    request.status = req.body?.status;
     res.json(request);
   });
 
-  // 15. AI CHATBOT (GEMINI OR EMBEDDED PROCEDURAL RULES)
   app.post("/api/chat", async (req, res) => {
-    const { message, history } = req.body;
+    const { message, history } = req.body || {};
     if (!message) {
       return res.status(400).json({ error: "Le message est requis." });
     }
 
-    // Try Gemini if API Key is configured
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        const { GoogleGenAI } = await import("@google/genai");
-        const ai = new GoogleGenAI({
-          apiKey: process.env.GEMINI_API_KEY,
-          httpOptions: {
-            headers: {
-              'User-Agent': 'aistudio-build',
-            }
-          }
-        });
-
-        const systemInstruction = `
-          Tu es "L'Assistant Santé+ Bénin", un chatbot médical et administratif d'Abomey-Calavi et Cotonou au Bénin.
-          Réponds avec clarté, bienveillance et rigueur. Tes réponses doivent être courtes, polies et structurées (en français).
-          
-          Règles clés du projet Santé+ à appliquer :
-          1. Les rendez-vous médicaux : Le choix du Service médical et de la Cause (motif) est obligatoire. Le choix du Docteur/Médecin est facultatif (optionnel).
-          2. Les factures et papiers : Les factures payées comportent un tampon officiel rouge "★ PAYÉ ★" ou "PAYÉ & CERTIFIÉ" du Ministère de la Santé du Bénin. La vérification se fait exclusivement offline par scan de QR code (qui contient les données décentralisées en clair). Aucune donnée confidentielle ou médicale n'est hébergée ou publiée en ligne sur le site.
-          3. Autorisation de dossier par le patient : Le patient n'a pas besoin de reconnaissance faciale ou d'empreinte digitale. Il signe l'autorisation via un bouton sécurisé avec son identité Lightning Network (LN Sign - signature cryptographique décentralisée Bitcoin) de façon claire et visible.
-          4. Le paiement se fait par Portefeuille FCFA local ou par Lightning Network (Satoshis / Bitcoin) instantanément.
-          
-          Reste humble et courtois. Ne fais pas de suppositions médicales complexes, conseille de consulter si nécessaire.
-        `;
-
-        const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: [
-            { role: "user", parts: [{ text: `Instruction système: ${systemInstruction}` }] },
-            ...(history || []).map((h: any) => ({
-              role: h.role === "user" ? "user" : "model",
-              parts: [{ text: h.text }]
-            })),
-            { role: "user", parts: [{ text: message }] }
-          ]
-        });
-
-        const reply = response.text || "Désolé, je n'ai pas pu générer de réponse.";
-        return res.json({ text: reply, source: "gemini" });
-      } catch (err: any) {
-        console.error("Gemini API Error, falling back to local chat engine:", err);
-      }
-    }
-
-    // Fallback: Local rule-based intelligent chatbot for offline/fallback mode
-    const msg = message.toLowerCase();
+    const msg = String(message).toLowerCase();
     let reply = "";
 
     if (msg.includes("facture") || msg.includes("payer") || msg.includes("recharge") || msg.includes("solde") || msg.includes("argent")) {
@@ -825,18 +700,18 @@ async function startServer() {
     res.json({ text: reply, source: "local" });
   });
 
+  app.use((err: any, _req: any, res: any, _next: any) => {
+    console.error("Unhandled server error:", err);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  });
 
-  // Integrated Vite Dev Mode Middleware / Production Asset Delivery
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
